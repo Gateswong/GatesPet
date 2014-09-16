@@ -63,22 +63,25 @@ class TaskManager(Thread):
     def run(self):
         while True:
             sleep(self.config['scan_interval'])
-            for t in self.tasks:
-                if not t.started:
-                    self.data_adapter.push_task_result(t.config['name'],
-                                                       {'last_error':t.result['last_error'],
-                                                        'message':t.result['message'],
-                                                        'startup_time':t.result['startup_time']},
-                                                       t.result['schedule'])
-                    self.tasks.remove(t)
-            while(len(self.tasks) < self.config['max_tasks']):
-                if self.queue.empty():
-                    print '[TaskManager] No tasks in queue.'
-                    break
-                t = self.queue.get()
-                self.tasks.append(t)
-                t.start()
-                print '[TaskManager] Task %s started!' % t.config['name']
+            try:
+                for t in self.tasks:
+                    if not t.isAlive():
+                        self.data_adapter.push_task_result(t.config['name'],
+                                                           {'last_error':t.result['last_error'],
+                                                            'message':t.result['message'],
+                                                            'startup_time':t.result['startup_time']},
+                                                           t.result['schedule'])
+                        self.tasks.remove(t)
+                while(len(self.tasks) < self.config['max_tasks']):
+                    if self.queue.empty():
+                        # print '[TaskManager] No tasks in queue.'
+                        break
+                    t = self.queue.get()
+                    self.tasks.append(t)
+                    t.start()
+                    # print '[TaskManager] Task %s started!' % t.config['name']
+            except BaseException as err:
+                self.data_adapter.push_error('TaskManager', {'message':err.args, 'position':'TaskManager.py >> class TaskManager >> def run()'})
                 
     
     

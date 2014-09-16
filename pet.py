@@ -27,10 +27,13 @@ mongo.fix_tasks()
 tm.start()
 
 while True:
-    tasks = mongo.get_scheduled_tasks()
-    for task in tasks:
-        tm.queue_task(task['module'], task['_id'], task['configure'], True)
-        print "[pet] Task %s added." % task['_id']
+    try:
+        tasks = mongo.get_scheduled_tasks()
+        for task in tasks:
+            tm.queue_task(task['module'], task['_id'], task['configure'], True)
+            # print "[pet] Task %s added." % task['_id']
+    except BaseException as err:
+        mongo.push_error('pet', {'message':err.args, 'position':'pet.py >> main loop'})
         
     sleep(process_interval)
         

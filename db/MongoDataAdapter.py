@@ -5,6 +5,7 @@ class MongoDataAdapter:
     
     def __init__(self, database='test'):
         self.mongo_client = pymongo.MongoClient()
+        self.collection_error = self.mongo_client['errors']
         self.set_database(database)
     
     def set_database(self, db_name):
@@ -59,6 +60,11 @@ class MongoDataAdapter:
                                     {'$set':{'status':'queued'}})
         
         return tasks
+    
+    def push_error(self, module, error):
+        self.collection_error.insert({'time':datetime.utcnow(), 'module':module, 'error':error})
+        
+        return None
     
 
 def create_adapter(database='test'):
