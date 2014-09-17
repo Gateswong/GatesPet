@@ -1,15 +1,21 @@
 from TaskManager import TaskManager
 from db import MongoDataAdapter
 from time import sleep
-import daemon
-import lockfile
+from daemon.pidfile import PIDLockFile
+import psutil
 
-program_lock = lockfile.LockFile('pet.lock')
-if program_lock.is_locked():
-    print 'Another instance is running. Exit'
-    exit()
+lock = PIDLockFile('pet.pid')
 
-program_lock.acquire()
+if lock.is_locked() and not lock.i_am_locking():
+    if not psutil.pid_exists(lock.read_pid()):
+        print 'The pidlock is hold by a void process. Breaking it.'
+        lock.break_lock()
+    else:
+        print 'Another process is holding pidlock. Exit.'
+        exit()
+
+print 'Acquiring pidlock.'
+lock.acquire(timeout=5)
 
 # TODO Load config.
 mongo = MongoDataAdapter.create_adapter('GatesPet')
@@ -26,6 +32,7 @@ mongo.fix_tasks()
 # Main loop
 tm.start()
 
+print 'Main program started.'
 while True:
     try:
         tasks = mongo.get_scheduled_tasks()
