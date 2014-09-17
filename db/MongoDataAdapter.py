@@ -5,7 +5,7 @@ class MongoDataAdapter:
     
     def __init__(self, database='test'):
         self.mongo_client = pymongo.MongoClient()
-        self.collection_error = self.mongo_client['errors']
+        self.collection_error = self.mongo_client['GatesPet']['errors']
         self.set_database(database)
     
     def set_database(self, db_name):
