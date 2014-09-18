@@ -40,9 +40,7 @@ print 'Main program started.'
 while True:
     try:
         if not tm.isAlive():
-            tmd = tm
             tm = create_task_manager(mongo, max_tasks, scan_interval)
-            tm.queue.queue.append(tmd.queue.queue)
             tm.start()
             
         tasks = mongo.get_scheduled_tasks()
