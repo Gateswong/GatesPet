@@ -5,12 +5,12 @@ class MongoDataAdapter:
     
     def __init__(self, database='test'):
         self.mongo_client = pymongo.MongoClient()
-        self.collection_error = self.mongo_client['GatesPet']['errors']
         self.set_database(database)
     
     def set_database(self, db_name):
         self.db = self.mongo_client[db_name]
         self.collection_tasks = self.db['tasks']
+        self.collection_error = self.db['errors']
         return None
         
         

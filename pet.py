@@ -4,6 +4,11 @@ from time import sleep
 from daemon.pidfile import PIDLockFile
 import psutil
 
+def create_task_manager(db, max_tasks, scan_interval):
+    # TaskManager instance.
+    tm = TaskManager(mongo, max_tasks=max_tasks, scan_interval=scan_interval)
+    return tm
+
 lock = PIDLockFile('pet.pid')
 
 if lock.is_locked() and not lock.i_am_locking():
@@ -19,12 +24,11 @@ lock.acquire(timeout=5)
 
 # TODO Load config.
 mongo = MongoDataAdapter.create_adapter('GatesPet')
-max_tasks = 20
-scan_interval = 5
+max_tasks = 50
+scan_interval = 10
 process_interval = 120
 
-# TaskManager instance.
-tm = TaskManager(mongo, max_tasks=max_tasks, scan_interval=scan_interval)
+tm = create_task_manager(mongo, max_tasks, scan_interval)
 
 # Fix tasks that previous instance did not proceed.
 mongo.fix_tasks()
@@ -35,11 +39,17 @@ tm.start()
 print 'Main program started.'
 while True:
     try:
+        if not tm.isAlive():
+            tmd = tm
+            tm = create_task_manager(mongo, max_tasks, scan_interval)
+            tm.queue.queue.append(tmd.queue.queue)
+            tm.start()
+            
         tasks = mongo.get_scheduled_tasks()
         for task in tasks:
             tm.queue_task(task['module'], task['_id'], task['configure'], True)
             # print "[pet] Task %s added." % task['_id']
-    except BaseException as err:
+    except StandardError as err:
         mongo.push_error('pet', {'message':err.args, 'position':'pet.py >> main loop'})
         
     sleep(process_interval)

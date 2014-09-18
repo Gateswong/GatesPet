@@ -80,7 +80,7 @@ class TaskManager(Thread):
                     self.tasks.append(t)
                     t.start()
                     # print '[TaskManager] Task %s started!' % t.config['name']
-            except BaseException as err:
+            except StandardError as err:
                 self.data_adapter.push_error('TaskManager', {'message':err.args, 'position':'TaskManager.py >> class TaskManager >> def run()'})
                 
     
